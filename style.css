@@ -1,0 +1,435 @@
+:root {
+    --neon-color: #ff3366;
+    --bg-dark: #0a0a0a;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-dark);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+    color: white;
+}
+
+#intro-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 100;
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#garage-door {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('GarageGate-4947.jpg');
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 2;
+}
+
+#garage-door:active {
+    cursor: grabbing;
+}
+
+.logo-placeholder {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.9);
+    letter-spacing: 5px;
+    margin-bottom: 20px;
+}
+
+.drag-instruction {
+    font-size: 0.9rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 30px;
+    animation: pulse 2s infinite;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.handle {
+    width: 120px;
+    height: 20px;
+    background: #111;
+    border-radius: 5px;
+    border-bottom: 3px solid #000;
+    border-top: 2px solid #444;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-5px); }
+}
+
+#dark-tunnel {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+#main-content {
+    display: none;
+    opacity: 0;
+    padding: 50px 20px;
+    transition: opacity 2s ease;
+}
+
+#main-content.visible {
+    display: block;
+    opacity: 1;
+}
+
+.neon-sign {
+    text-align: center;
+    font-size: 3rem;
+    color: #fff;
+    text-shadow:
+            0 0 5px #fff,
+            0 0 10px #fff,
+            0 0 20px var(--neon-color),
+            0 0 40px var(--neon-color),
+            0 0 80px var(--neon-color);
+    margin-bottom: 60px;
+    opacity: 0;
+}
+
+.beat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.beat-card {
+    background-color: transparent;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.beat-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.beat-card:hover .beat-card-inner {
+    transform: rotateY(180deg) scale(1.15);
+    z-index: 10;
+}
+
+.beat-card-front, .beat-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.beat-card-front {
+    background-color: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #333;
+}
+
+.music-icon {
+    width: 60px;
+    height: 60px;
+    fill: #444;
+    transition: fill 0.3s;
+}
+
+.beat-card:hover .music-icon {
+    fill: var(--neon-color);
+}
+
+.beat-card-back {
+    background-color: #1a1a1a;
+    color: white;
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid #333;
+    box-sizing: border-box;
+}
+
+.beat-card-back h3 {
+    margin: 0;
+    color: var(--neon-color);
+    font-size: 1.2rem;
+}
+
+.beat-stats, .beat-genre {
+    margin: 2px 0;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.player-controls {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 10px 0;
+    gap: 10px;
+}
+
+.play-pause-btn {
+    background: none;
+    border: none;
+    color: var(--neon-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    outline: none;
+    padding: 0;
+}
+
+.progress-bar {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    background: #333;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+}
+
+.progress-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--neon-color);
+    cursor: pointer;
+}
+
+.inquire-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--neon-color);
+    color: var(--neon-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s background, 0.3s color;
+}
+
+.inquire-btn:hover {
+    background: var(--neon-color);
+    color: #fff;
+}
+.beat-grid {
+    position: relative;
+}
+#bg-visual {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 100vh;
+    background-image: url('3dgifmaker10535.gif');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 600px;
+    z-index: -1;
+    opacity: 0.2;
+    pointer-events: none;
+}
+.beat-card.is-playing .beat-card-front::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 12px;
+    height: 12px;
+    background-color: #ff0000;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ff0000;
+    animation: pulse-red 1.5s infinite;
+    z-index: 20;
+}
+
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+    }
+}
+
+.shuffle-container {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+#shuffle-btn {
+    background: transparent;
+    border: 2px solid var(--neon-color);
+    color: var(--neon-color);
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
+    outline: none;
+}
+
+#shuffle-btn:hover {
+    background: var(--neon-color);
+    color: #fff;
+    box-shadow: 0 0 20px var(--neon-color);
+}
+
+.beat-card.force-flip .beat-card-inner {
+    transform: rotateY(180deg) scale(1.15);
+    z-index: 10;
+}
+
+/* --- ANIMACJA RZUTU KOŚĆMI --- */
+#dice-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    pointer-events: none; /* Nie blokuje kliknięć w stronę pod spodem */
+    visibility: hidden;
+}
+
+#dice-overlay.rolling {
+    visibility: visible;
+}
+
+.die {
+    width: 70px;
+    height: 70px;
+    background-color: var(--neon-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(255, 51, 102, 0.4), inset 0 0 15px rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+}
+
+/* Wykorzystanie box-shadow do narysowania kropek (bardzo czysty kod) */
+.die-5::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background-color: white; /* Centralna kropka */
+    border-radius: 50%;
+    box-shadow:
+            -20px -20px 0 0 white,
+            20px 20px 0 0 white,
+            -20px 20px 0 0 white,
+            20px -20px 0 0 white;
+}
+
+.die-6::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background-color: transparent; /* Brak centralnej */
+    border-radius: 50%;
+    box-shadow:
+            -20px -22px 0 0 white,
+            20px -22px 0 0 white,
+            -20px 0 0 0 white,
+            20px 0 0 0 white,
+            -20px 22px 0 0 white,
+            20px 22px 0 0 white;
+}
+
+/* Aktywacja animacji z klasą .rolling */
+#dice-overlay.rolling .die {
+    animation: dice-roll 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Lekkie opóźnienie drugiej kości dla realizmu */
+#dice-overlay.rolling .die-6 {
+    animation-delay: 0.1s;
+}
+
+ /* kosci */
+@keyframes dice-roll {
+    0% {
+        transform: translate(100vw, -20vh) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-5vw, 5vh) rotate(720deg); /* Lekkie "odbicie" w lewo */
+    }
+    70% {
+        transform: translate(0, 0) rotate(1080deg); /* Lądowanie na środku */
+        opacity: 1;
+    }
+    90% {
+        transform: translate(0, 0) rotate(1080deg) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(0, 0) rotate(1080deg) scale(1.3);
+        opacity: 0; /* Rozmycie/zniknięcie tuż po najechaniu kamery */
+    }
+}
