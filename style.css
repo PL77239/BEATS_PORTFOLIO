@@ -337,7 +337,7 @@ body, html {
     z-index: 10;
 }
 
-/* --- ANIMACJA RZUTU KOŚĆMI --- */
+/* --- Physics-based dice overlay --- */
 #dice-overlay {
     position: fixed;
     top: 0;
@@ -358,24 +358,40 @@ body, html {
 }
 
 .die {
+    --die-size: 70px;
+    --tx: 0px;
+    --ty: 0px;
+    --rot: 0deg;
+    --scale: 1;
+    --die-opacity: 0;
     width: 70px;
     height: 70px;
-    background-color: var(--neon-color);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(255, 51, 102, 0.4), inset 0 0 15px rgba(0,0,0,0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background-color: color-mix(in srgb, var(--neon-color), #111 20%);
+    border: 2px solid color-mix(in srgb, var(--neon-color), #fff 20%);
+    border-radius: 0;
+    box-shadow: 0 12px 26px rgba(255, 51, 102, 0.4), inset 0 0 15px rgba(0,0,0,0.3);
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(var(--scale));
+    opacity: var(--die-opacity);
+    will-change: transform, opacity;
 }
 
-/* Wykorzystanie box-shadow do narysowania kropek (bardzo czysty kod) */
-.die-5::after {
+#dice-overlay .die::after {
     content: '';
+    position: absolute;
     width: 14px;
     height: 14px;
-    background-color: white; /* Centralna kropka */
+    background-color: #fff;
     border-radius: 50%;
+}
+
+/* Pips built only with ::after + box-shadow */
+.die-5::after {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     box-shadow:
             -20px -20px 0 0 white,
             20px 20px 0 0 white,
@@ -384,52 +400,15 @@ body, html {
 }
 
 .die-6::after {
-    content: '';
-    width: 14px;
-    height: 14px;
-    background-color: transparent; /* Brak centralnej */
-    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
     box-shadow:
-            -20px -22px 0 0 white,
-            20px -22px 0 0 white,
+            -20px -20px 0 0 white,
+            20px -20px 0 0 white,
             -20px 0 0 0 white,
             20px 0 0 0 white,
-            -20px 22px 0 0 white,
-            20px 22px 0 0 white;
-}
-
-/* Aktywacja animacji z klasą .rolling */
-#dice-overlay.rolling .die {
-    animation: dice-roll 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
-/* Lekkie opóźnienie drugiej kości dla realizmu */
-#dice-overlay.rolling .die-6 {
-    animation-delay: 0.1s;
-}
-
- /* kosci */
-@keyframes dice-roll {
-    0% {
-        transform: translate(100vw, -20vh) rotate(0deg);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    50% {
-        transform: translate(-5vw, 5vh) rotate(720deg); /* Lekkie "odbicie" w lewo */
-    }
-    70% {
-        transform: translate(0, 0) rotate(1080deg); /* Lądowanie na środku */
-        opacity: 1;
-    }
-    90% {
-        transform: translate(0, 0) rotate(1080deg) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(0, 0) rotate(1080deg) scale(1.3);
-        opacity: 0; /* Rozmycie/zniknięcie tuż po najechaniu kamery */
-    }
+            -20px 20px 0 0 white,
+            20px 20px 0 0 white;
 }
