@@ -56,6 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const zDrag = 0.987;
       const baseDistance = 50;
       const bounceLift = [560, 300];
+      const randomInRange = (min, max) => min + Math.random() * (max - min);
+      const smoothstep = (edge0, edge1, value) => {
+        const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+      };
 
       const states = [
         {
@@ -67,15 +72,17 @@ document.addEventListener("DOMContentLoaded", () => {
           x: window.innerWidth * 0.5 - baseDistance,
           y: window.innerHeight * 0.34,
           z: 220,
-          vx: -(window.innerWidth * 0.72),
-          vy: -1240,
-          vz: -320,
+          vx: -(window.innerWidth * randomInRange(0.69, 0.76)),
+          vy: -randomInRange(1180, 1300),
+          vz: -randomInRange(280, 360),
           rx: 24,
           ry: -38,
           rz: 12,
-          vrx: 810,
-          vry: 1220,
-          vrz: 1750,
+          vrx: randomInRange(760, 980),
+          vry: randomInRange(1150, 1450),
+          vrz: randomInRange(1620, 1930),
+          spinPhase: randomInRange(0, Math.PI * 2),
+          spinBias: randomInRange(0.92, 1.1),
           bounces: 0,
           settled: false,
         },
@@ -88,15 +95,17 @@ document.addEventListener("DOMContentLoaded", () => {
           x: window.innerWidth * 0.54 + baseDistance,
           y: window.innerHeight * 0.37,
           z: 240,
-          vx: -(window.innerWidth * 0.78),
-          vy: -1320,
-          vz: -280,
+          vx: -(window.innerWidth * randomInRange(0.73, 0.82)),
+          vy: -randomInRange(1260, 1410),
+          vz: -randomInRange(250, 330),
           rx: -18,
           ry: 28,
           rz: -28,
-          vrx: 980,
-          vry: 1340,
-          vrz: 1620,
+          vrx: randomInRange(920, 1160),
+          vry: randomInRange(1240, 1560),
+          vrz: randomInRange(1490, 1810),
+          spinPhase: randomInRange(0, Math.PI * 2),
+          spinBias: randomInRange(0.88, 1.08),
           bounces: 0,
           settled: false,
         },
@@ -109,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (lastTs === null) {
           lastTs = ts;
         }
-        const dt = Math.min((ts - lastTs) / 1000, 0.033);
+        const dt = Math.min((ts - lastTs) / 1000, 0.02);
         lastTs = ts;
         const elapsed = ts - startedAt;
         const progress = Math.min(elapsed / durationMs, 1);
@@ -125,6 +134,13 @@ document.addEventListener("DOMContentLoaded", () => {
             state.rx += state.vrx * dt;
             state.ry += state.vry * dt;
             state.rz += state.vrz * dt;
+
+            // Slight non-uniform rotational turbulence keeps throws organic.
+            const wobble = Math.sin(elapsed * 0.009 + state.spinPhase) * 18;
+            state.vrx += wobble * dt * state.spinBias;
+            state.vry += Math.cos(elapsed * 0.008 + state.spinPhase) * 14 * dt;
+            state.vrz += Math.sin(elapsed * 0.0065 + state.spinPhase * 0.8) * 12 * dt;
+
             state.vrx *= 0.994;
             state.vry *= 0.994;
             state.vrz *= 0.994;
@@ -133,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!state.settled && state.y > 0 && state.vy > 0) {
             state.y = 0;
             if (state.bounces < bounceLift.length) {
-              state.vy = -bounceLift[state.bounces];
+              state.vy = -(bounceLift[state.bounces] * randomInRange(0.95, 1.04));
               state.vx *= 0.58;
               state.vz *= 0.52;
               state.vrx *= 0.7;
@@ -162,11 +178,12 @@ document.addEventListener("DOMContentLoaded", () => {
             state.rz += (state.restRz - state.rz) * (easeStrength + 0.04);
           }
 
-          let opacity = progress < 0.06 ? progress / 0.06 : 1;
+          const fadeIn = smoothstep(0, 0.07, progress);
+          const fadeOut = 1 - smoothstep(0.9, 1, progress);
+          let opacity = Math.max(0, Math.min(1, fadeIn * fadeOut));
           let scale = 1;
           if (progress > 0.9) {
-            const fadeProgress = (progress - 0.9) / 0.1;
-            opacity = Math.max(0, 1 - fadeProgress);
+            const fadeProgress = smoothstep(0.9, 1, progress);
             scale = 1 + 0.12 * fadeProgress;
           }
 
