@@ -35,7 +35,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     die.style.setProperty("--tx", `${state.x}px`);
     die.style.setProperty("--ty", `${state.y}px`);
-    die.style.setProperty("--rot", `${state.rotation}deg`);
+    die.style.setProperty("--tz", `${state.z}px`);
+    die.style.setProperty("--rx", `${state.rx}deg`);
+    die.style.setProperty("--ry", `${state.ry}deg`);
+    die.style.setProperty("--rz", `${state.rz}deg`);
     die.style.setProperty("--scale", `${state.scale}`);
     die.style.setProperty("--die-opacity", `${state.opacity}`);
   };
@@ -49,33 +52,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const durationMs = 2000;
       const gravity = 3200;
-      const restitution = 0.38;
-      const drag = 0.996;
-      const startX = window.innerWidth * 0.7;
-      const startY = -window.innerHeight * 0.35;
-      const landTimeSec = 1.2;
-      const baseDistance = 56;
+      const drag = 0.992;
+      const zDrag = 0.987;
+      const baseDistance = 50;
+      const bounceLift = [560, 300];
 
       const states = [
         {
           die: dieFive,
           offset: -baseDistance,
-          x: startX - baseDistance,
-          y: startY - 20,
-          vx: -(startX / landTimeSec) * 0.94,
-          vy: -280,
-          rotation: 0,
-          omega: 1840,
+          x: window.innerWidth * 0.5 - baseDistance,
+          y: window.innerHeight * 0.34,
+          z: 220,
+          vx: -(window.innerWidth * 0.72),
+          vy: -1240,
+          vz: -320,
+          rx: 24,
+          ry: -38,
+          rz: 12,
+          vrx: 810,
+          vry: 1220,
+          vrz: 1750,
+          bounces: 0,
+          settled: false,
         },
         {
           die: dieSix,
           offset: baseDistance,
-          x: startX + baseDistance,
-          y: startY + 12,
-          vx: -(startX / landTimeSec) * 1.02,
-          vy: -420,
-          rotation: 32,
-          omega: 1960,
+          x: window.innerWidth * 0.54 + baseDistance,
+          y: window.innerHeight * 0.37,
+          z: 240,
+          vx: -(window.innerWidth * 0.78),
+          vy: -1320,
+          vz: -280,
+          rx: -18,
+          ry: 28,
+          rz: -28,
+          vrx: 980,
+          vry: 1340,
+          vrz: 1620,
+          bounces: 0,
+          settled: false,
         },
       ];
 
@@ -92,25 +109,50 @@ document.addEventListener("DOMContentLoaded", () => {
         const progress = Math.min(elapsed / durationMs, 1);
 
         states.forEach((state) => {
-          state.vy += gravity * dt;
-          state.vx *= drag;
-          state.x += state.vx * dt;
-          state.y += state.vy * dt;
-          state.rotation += state.omega * dt;
-          state.omega *= 0.995;
-
-          if (state.y > 0) {
-            state.y = 0;
-            state.vy = -Math.abs(state.vy) * restitution;
-            state.vx *= 0.86;
-            state.omega *= 0.83;
+          if (!state.settled) {
+            state.vy += gravity * dt;
+            state.vx *= drag;
+            state.vz *= zDrag;
+            state.x += state.vx * dt;
+            state.y += state.vy * dt;
+            state.z += state.vz * dt;
+            state.rx += state.vrx * dt;
+            state.ry += state.vry * dt;
+            state.rz += state.vrz * dt;
+            state.vrx *= 0.994;
+            state.vry *= 0.994;
+            state.vrz *= 0.994;
           }
 
-          // Ease toward center near the end so both dice clearly "land".
-          if (progress > 0.8) {
-            const ease = (progress - 0.8) / 0.2;
-            state.x += (state.offset - state.x) * ease * 0.15;
-            state.y += (0 - state.y) * ease * 0.2;
+          if (!state.settled && state.y > 0 && state.vy > 0) {
+            state.y = 0;
+            if (state.bounces < bounceLift.length) {
+              state.vy = -bounceLift[state.bounces];
+              state.vx *= 0.58;
+              state.vz *= 0.52;
+              state.vrx *= 0.7;
+              state.vry *= 0.7;
+              state.vrz *= 0.72;
+              state.bounces += 1;
+            } else {
+              state.settled = true;
+              state.vx = 0;
+              state.vy = 0;
+              state.vz = 0;
+              state.vrx = 0;
+              state.vry = 0;
+              state.vrz = 0;
+            }
+          }
+
+          // Keep both dice settling exactly in screen center region.
+          if (state.settled || progress > 0.78) {
+            const easeStrength = state.settled ? 0.24 : 0.1;
+            state.x += (state.offset - state.x) * easeStrength;
+            state.y += (0 - state.y) * easeStrength;
+            state.z += (0 - state.z) * (easeStrength + 0.03);
+            state.rx += (0 - state.rx) * (easeStrength + 0.04);
+            state.ry += (0 - state.ry) * (easeStrength + 0.04);
           }
 
           let opacity = progress < 0.06 ? progress / 0.06 : 1;
@@ -124,7 +166,10 @@ document.addEventListener("DOMContentLoaded", () => {
           setDieState(state.die, {
             x: state.x,
             y: state.y,
-            rotation: state.rotation,
+            z: state.z,
+            rx: state.rx,
+            ry: state.ry,
+            rz: state.rz,
             scale,
             opacity,
           });
@@ -298,8 +343,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 1200);
 
       if (prefersReducedMotion.matches) {
-        setDieState(dieFive, { x: -56, y: 0, rotation: 1080, scale: 1, opacity: 0 });
-        setDieState(dieSix, { x: 56, y: 0, rotation: 1080, scale: 1, opacity: 0 });
+        setDieState(dieFive, { x: -50, y: 0, z: 0, rx: 0, ry: 0, rz: 1080, scale: 1, opacity: 0 });
+        setDieState(dieSix, { x: 50, y: 0, z: 0, rx: 0, ry: 0, rz: 1080, scale: 1, opacity: 0 });
         await new Promise((resolve) => setTimeout(resolve, 120));
       } else {
         await runDicePhysicsAnimation();
