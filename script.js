@@ -61,6 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
         {
           die: dieFive,
           offset: -baseDistance,
+          restRx: 16,
+          restRy: -20,
+          restRz: 6,
           x: window.innerWidth * 0.5 - baseDistance,
           y: window.innerHeight * 0.34,
           z: 220,
@@ -79,6 +82,9 @@ document.addEventListener("DOMContentLoaded", () => {
         {
           die: dieSix,
           offset: baseDistance,
+          restRx: -14,
+          restRy: 22,
+          restRz: -8,
           x: window.innerWidth * 0.54 + baseDistance,
           y: window.innerHeight * 0.37,
           z: 240,
@@ -151,8 +157,9 @@ document.addEventListener("DOMContentLoaded", () => {
             state.x += (state.offset - state.x) * easeStrength;
             state.y += (0 - state.y) * easeStrength;
             state.z += (0 - state.z) * (easeStrength + 0.03);
-            state.rx += (0 - state.rx) * (easeStrength + 0.04);
-            state.ry += (0 - state.ry) * (easeStrength + 0.04);
+            state.rx += (state.restRx - state.rx) * (easeStrength + 0.04);
+            state.ry += (state.restRy - state.ry) * (easeStrength + 0.04);
+            state.rz += (state.restRz - state.rz) * (easeStrength + 0.04);
           }
 
           let opacity = progress < 0.06 ? progress / 0.06 : 1;
@@ -343,8 +350,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 1200);
 
       if (prefersReducedMotion.matches) {
-        setDieState(dieFive, { x: -50, y: 0, z: 0, rx: 0, ry: 0, rz: 1080, scale: 1, opacity: 0 });
-        setDieState(dieSix, { x: 50, y: 0, z: 0, rx: 0, ry: 0, rz: 1080, scale: 1, opacity: 0 });
+        setDieState(dieFive, { x: -50, y: 0, z: 0, rx: 16, ry: -20, rz: 0, scale: 1, opacity: 0 });
+        setDieState(dieSix, { x: 50, y: 0, z: 0, rx: -14, ry: 22, rz: 0, scale: 1, opacity: 0 });
         await new Promise((resolve) => setTimeout(resolve, 120));
       } else {
         await runDicePhysicsAnimation();
