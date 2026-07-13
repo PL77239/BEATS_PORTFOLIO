@@ -413,22 +413,33 @@ body, html {
     background: transparent;
     border: 2px solid var(--neon-color);
     color: var(--neon-color);
-    padding: 12px 30px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    width: 64px;
+    height: 64px;
+    padding: 0;
     border-radius: 30px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
     outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #shuffle-btn:hover {
     background: var(--neon-color);
     color: #fff;
     box-shadow: 0 0 20px var(--neon-color);
+}
+
+.shuffle-icon {
+    width: 28px;
+    height: 28px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .beat-card.force-flip .beat-card-inner {
