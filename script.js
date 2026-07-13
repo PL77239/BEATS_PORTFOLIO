@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const grid = document.getElementById("beat-grid");
   const shuffleBtn = document.getElementById("shuffle-btn");
+  const genreSelector = document.getElementById("genre-selector");
+  const genreLabel = genreSelector?.querySelector(".genre-label") ?? null;
+  const genreButtons = Array.from(document.querySelectorAll(".genre-option"));
   const diceOverlay = document.getElementById("dice-overlay");
   const diceCanvas = document.getElementById("dice-canvas");
   const dieFive = diceOverlay?.querySelector(".die-5") ?? null;
@@ -14,6 +17,40 @@ document.addEventListener("DOMContentLoaded", () => {
   let revealTimerId = null;
   let finishTimerId = null;
   let shuffleAnimationId = null;
+  let activeGenre = "Various";
+
+  const GENRE_LIST = ["Florida", "Detroit", "West Coast", "Trap", "Various"];
+
+  // Placeholder mapping for future curation.
+  // Add filenames to these sets when tracks are tagged.
+  const genreAssignments = {
+    Florida: new Set([]),
+    Detroit: new Set([]),
+    "West Coast": new Set([]),
+    Trap: new Set([]),
+    Various: new Set([]),
+  };
+
+  const detectGenreFromFilename = (filename) => {
+    for (const genre of GENRE_LIST) {
+      if (genre === "Various") {
+        continue;
+      }
+      if (genreAssignments[genre]?.has(filename)) {
+        return genre;
+      }
+    }
+    return "Various";
+  };
+
+  const applyGenreFilter = () => {
+    const allCards = Array.from(document.querySelectorAll(".beat-card"));
+    allCards.forEach((card) => {
+      const cardGenre = card.getAttribute("data-genre") || "Various";
+      const visible = activeGenre === "Various" ? true : cardGenre === activeGenre;
+      card.style.display = visible ? "" : "none";
+    });
+  };
   const webglDice = {
     ready: false,
     failed: false,
@@ -451,9 +488,11 @@ document.addEventListener("DOMContentLoaded", () => {
           const bpm = match ? match[2] : "N/A";
 
           const beatId = `B${(index + 1).toString().padStart(3, "0")}`;
+          const detectedGenre = detectGenreFromFilename(filename);
           const card = document.createElement("div");
           card.className = "beat-card";
           card.setAttribute("data-beat-id", beatId);
+          card.setAttribute("data-genre", detectedGenre);
 
           card.innerHTML = `
             <div class="beat-card-inner">
@@ -465,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="beat-card-back">
                 <h3>${title}</h3>
                 <p class="beat-stats">${bpm} BPM | Key: [TBD]</p>
-                <p class="beat-genre">Genre: [TBD]</p>
+                <p class="beat-genre">Genre: ${detectedGenre}</p>
                 <div class="player-controls">
                   <button class="play-pause-btn" data-audio-src="${filename}">▶</button>
                   <input type="range" class="progress-bar" value="0" max="100">
@@ -476,6 +515,7 @@ document.addEventListener("DOMContentLoaded", () => {
           `;
           grid.appendChild(card);
         });
+        applyGenreFilter();
       })
       .catch((error) => console.error("Błąd ładowania listy bitów:", error));
 
@@ -529,6 +569,38 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const seekTime = (e.target.value / 100) * globalAudioPlayer.duration;
       globalAudioPlayer.currentTime = seekTime;
+    });
+  }
+
+  if (genreLabel && genreSelector) {
+    const setExpanded = (expanded) => {
+      genreLabel.setAttribute("aria-expanded", expanded ? "true" : "false");
+    };
+    genreSelector.addEventListener("mouseenter", () => setExpanded(true));
+    genreSelector.addEventListener("mouseleave", () => setExpanded(false));
+    genreSelector.addEventListener("focusin", () => setExpanded(true));
+    genreSelector.addEventListener("focusout", (event) => {
+      if (!genreSelector.contains(event.relatedTarget)) {
+        setExpanded(false);
+      }
+    });
+  }
+
+  if (genreButtons.length > 0) {
+    genreButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const selectedGenre = button.getAttribute("data-genre");
+        if (!selectedGenre || !GENRE_LIST.includes(selectedGenre)) {
+          return;
+        }
+        activeGenre = selectedGenre;
+        genreButtons.forEach((option) => {
+          const isActive = option === button;
+          option.classList.toggle("active", isActive);
+          option.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+        applyGenreFilter();
+      });
     });
   }
 
