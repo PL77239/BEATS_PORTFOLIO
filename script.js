@@ -203,6 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const restitutionProfile = [0.42, 0.32];
       const physicsStep = 1 / 120;
       const randomInRange = (min, max) => min + Math.random() * (max - min);
+      const spawnY = -window.innerHeight * randomInRange(0.42, 0.55);
+      const centerX = window.innerWidth * 0.5;
       const smoothstep = (edge0, edge1, value) => {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
         return t * t * (3 - 2 * t);
@@ -216,20 +218,20 @@ document.addEventListener("DOMContentLoaded", () => {
           restRx: 16,
           restRy: -20,
           restRz: 6,
-          x: window.innerWidth * 0.5 - baseDistance,
-          y: window.innerHeight * 0.34,
-          z: 220,
-          vx: -(window.innerWidth * randomInRange(0.69, 0.76)),
-          vy: -randomInRange(1180, 1300),
-          vz: -randomInRange(280, 360),
+          x: centerX + randomInRange(140, 280),
+          y: spawnY + randomInRange(-35, 25),
+          z: randomInRange(180, 290),
+          vx: -randomInRange(460, 820),
+          vy: randomInRange(1180, 1560),
+          vz: -randomInRange(300, 430),
           rx: 24,
           ry: -38,
           rz: 12,
-          vrx: randomInRange(760, 980),
-          vry: randomInRange(1150, 1450),
-          vrz: randomInRange(1620, 1930),
+          vrx: randomInRange(820, 1120),
+          vry: randomInRange(1230, 1680),
+          vrz: randomInRange(1760, 2280),
           spinPhase: randomInRange(0, Math.PI * 2),
-          spinBias: randomInRange(0.92, 1.1),
+          spinBias: randomInRange(0.88, 1.2),
           bounces: 0,
           settled: false,
           renderX: 0,
@@ -246,20 +248,20 @@ document.addEventListener("DOMContentLoaded", () => {
           restRx: -14,
           restRy: 22,
           restRz: -8,
-          x: window.innerWidth * 0.54 + baseDistance,
-          y: window.innerHeight * 0.37,
-          z: 240,
-          vx: -(window.innerWidth * randomInRange(0.73, 0.82)),
-          vy: -randomInRange(1260, 1410),
-          vz: -randomInRange(250, 330),
+          x: centerX + randomInRange(180, 340),
+          y: spawnY + randomInRange(-45, 20),
+          z: randomInRange(210, 320),
+          vx: -randomInRange(520, 960),
+          vy: randomInRange(1280, 1680),
+          vz: -randomInRange(280, 390),
           rx: -18,
           ry: 28,
           rz: -28,
-          vrx: randomInRange(920, 1160),
-          vry: randomInRange(1240, 1560),
-          vrz: randomInRange(1490, 1810),
+          vrx: randomInRange(980, 1320),
+          vry: randomInRange(1320, 1840),
+          vrz: randomInRange(1620, 2180),
           spinPhase: randomInRange(0, Math.PI * 2),
-          spinBias: randomInRange(0.88, 1.08),
+          spinBias: randomInRange(0.85, 1.16),
           bounces: 0,
           settled: false,
           renderX: 0,
@@ -311,8 +313,8 @@ document.addEventListener("DOMContentLoaded", () => {
           if (state.bounces < restitutionProfile.length) {
             const restitution = restitutionProfile[state.bounces];
             state.vy = -Math.max(165, impactVy * restitution * randomInRange(0.97, 1.03));
-            state.vx *= 0.64;
-            state.vz *= 0.57;
+            state.vx = state.vx * 0.64 + randomInRange(-95, 95);
+            state.vz = state.vz * 0.57 + randomInRange(-50, 45);
             state.vrx *= 0.76;
             state.vry *= 0.76;
             state.vrz *= 0.78;
@@ -347,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
         states.forEach((state) => {
           // Keep both dice settling exactly in screen center region.
           if (state.settled || progress > 0.78) {
-            const easeStrength = state.settled ? 0.24 : 0.1;
+            const easeStrength = state.settled ? 0.27 : 0.12;
             state.x += (state.offset - state.x) * easeStrength;
             state.y += (0 - state.y) * easeStrength;
             state.z += (0 - state.z) * (easeStrength + 0.03);
