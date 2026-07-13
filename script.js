@@ -235,16 +235,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const randomInRange = (min, max) => min + Math.random() * (max - min);
       const randomInt = (min, max) => Math.floor(randomInRange(min, max + 1));
       const pick = (arr) => arr[randomInt(0, arr.length - 1)];
-      const settleOrientations = [
-        { rx: 14, ry: -16, rz: 4 },
-        { rx: -12, ry: 24, rz: -10 },
-        { rx: 18, ry: 33, rz: 14 },
-        { rx: -20, ry: -28, rz: 8 },
-        { rx: 10, ry: 42, rz: -18 },
-        { rx: -16, ry: 8, rz: 22 },
-      ];
-      const dieFiveRest = pick(settleOrientations);
-      const dieSixRest = pick(settleOrientations);
+      const quarterTurns = [0, 90, 180, 270];
+      const buildRestOrientation = () => ({
+        rx: pick(quarterTurns) + randomInRange(-10, 10),
+        ry: pick(quarterTurns) + randomInRange(-10, 10),
+        rz: pick(quarterTurns) + randomInRange(-14, 14),
+      });
+      const dieFiveRest = buildRestOrientation();
+      let dieSixRest = buildRestOrientation();
+      // Avoid mirror-identical final look for both dice in one roll.
+      if (
+        Math.abs(dieFiveRest.rx - dieSixRest.rx) < 22 &&
+        Math.abs(dieFiveRest.ry - dieSixRest.ry) < 22 &&
+        Math.abs(dieFiveRest.rz - dieSixRest.rz) < 22
+      ) {
+        dieSixRest = buildRestOrientation();
+      }
       const throwStyle = {
         durationMs: randomInRange(1880, 2360),
         gravity: randomInRange(3000, 3520),

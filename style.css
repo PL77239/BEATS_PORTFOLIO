@@ -436,12 +436,18 @@ body, html {
     width: 30px;
     height: 30px;
     object-fit: contain;
-    filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 51, 102, 0.45));
+    filter:
+        brightness(0) saturate(100%)
+        invert(33%) sepia(93%) saturate(2402%) hue-rotate(320deg) brightness(108%) contrast(109%)
+        drop-shadow(0 0 8px rgba(255, 51, 102, 0.65));
     transition: filter 0.25s ease, transform 0.25s ease;
 }
 
 #shuffle-btn:hover .shuffle-icon {
-    filter: brightness(0) invert(1) drop-shadow(0 0 12px rgba(255, 255, 255, 0.65));
+    filter:
+        brightness(0) saturate(100%)
+        invert(33%) sepia(93%) saturate(2402%) hue-rotate(320deg) brightness(122%) contrast(112%)
+        drop-shadow(0 0 12px rgba(255, 51, 102, 0.95));
     transform: scale(1.05);
 }
 
