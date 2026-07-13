@@ -204,7 +204,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const physicsStep = 1 / 120;
       const randomInRange = (min, max) => min + Math.random() * (max - min);
       const spawnY = -window.innerHeight * randomInRange(0.42, 0.55);
-      const centerX = window.innerWidth * 0.5;
       const smoothstep = (edge0, edge1, value) => {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
         return t * t * (3 - 2 * t);
@@ -218,10 +217,10 @@ document.addEventListener("DOMContentLoaded", () => {
           restRx: 16,
           restRy: -20,
           restRz: 6,
-          x: centerX + randomInRange(140, 280),
+          x: randomInRange(260, 430),
           y: spawnY + randomInRange(-35, 25),
           z: randomInRange(180, 290),
-          vx: -randomInRange(460, 820),
+          vx: -randomInRange(420, 760),
           vy: randomInRange(1180, 1560),
           vz: -randomInRange(300, 430),
           rx: 24,
@@ -234,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
           spinBias: randomInRange(0.88, 1.2),
           bounces: 0,
           settled: false,
+          settlingGateReached: false,
           renderX: 0,
           renderY: 0,
           renderZ: 0,
@@ -248,10 +248,10 @@ document.addEventListener("DOMContentLoaded", () => {
           restRx: -14,
           restRy: 22,
           restRz: -8,
-          x: centerX + randomInRange(180, 340),
+          x: randomInRange(320, 520),
           y: spawnY + randomInRange(-45, 20),
           z: randomInRange(210, 320),
-          vx: -randomInRange(520, 960),
+          vx: -randomInRange(520, 920),
           vy: randomInRange(1280, 1680),
           vz: -randomInRange(280, 390),
           rx: -18,
@@ -264,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
           spinBias: randomInRange(0.85, 1.16),
           bounces: 0,
           settled: false,
+          settlingGateReached: false,
           renderX: 0,
           renderY: 0,
           renderZ: 0,
@@ -287,6 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const stepState = (state, dt, elapsed) => {
         if (!state.settled) {
+          const toCenter = state.offset - state.x;
+          const centerDriftStrength = state.bounces < 2 ? 240 : 420;
+          state.vx += Math.max(-1, Math.min(1, toCenter / 280)) * centerDriftStrength * dt;
+
           state.vy += gravity * dt;
           state.vx *= drag;
           state.vz *= zDrag;
@@ -313,20 +318,31 @@ document.addEventListener("DOMContentLoaded", () => {
           if (state.bounces < restitutionProfile.length) {
             const restitution = restitutionProfile[state.bounces];
             state.vy = -Math.max(165, impactVy * restitution * randomInRange(0.97, 1.03));
-            state.vx = state.vx * 0.64 + randomInRange(-95, 95);
+            state.vx = state.vx * 0.64 + (state.offset - state.x) * randomInRange(0.16, 0.24) + randomInRange(-55, 55);
             state.vz = state.vz * 0.57 + randomInRange(-50, 45);
             state.vrx *= 0.76;
             state.vry *= 0.76;
             state.vrz *= 0.78;
             state.bounces += 1;
           } else {
-            state.settled = true;
-            state.vx = 0;
-            state.vy = 0;
-            state.vz = 0;
-            state.vrx = 0;
-            state.vry = 0;
-            state.vrz = 0;
+            const closeEnoughToCenter = Math.abs(state.x - state.offset) < 90;
+            if (closeEnoughToCenter) {
+              state.settled = true;
+              state.vx = 0;
+              state.vy = 0;
+              state.vz = 0;
+              state.vrx = 0;
+              state.vry = 0;
+              state.vrz = 0;
+            } else {
+              // If still too far from center, do short corrective hops/skids.
+              state.vy = -Math.max(95, impactVy * 0.22);
+              state.vx = state.vx * 0.72 + (state.offset - state.x) * 0.36;
+              state.vz *= 0.62;
+              state.vrx *= 0.74;
+              state.vry *= 0.74;
+              state.vrz *= 0.75;
+            }
           }
         }
       };
@@ -347,9 +363,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         states.forEach((state) => {
-          // Keep both dice settling exactly in screen center region.
-          if (state.settled || progress > 0.78) {
-            const easeStrength = state.settled ? 0.27 : 0.12;
+          if (!state.settled && state.bounces >= restitutionProfile.length) {
+            state.settlingGateReached = Math.abs(state.x - state.offset) < 130;
+          }
+
+          // Settle only once dice are near center (or if animation is ending hard).
+          if (state.settled || state.settlingGateReached || progress > 0.97) {
+            const easeStrength = state.settled ? 0.27 : 0.09;
             state.x += (state.offset - state.x) * easeStrength;
             state.y += (0 - state.y) * easeStrength;
             state.z += (0 - state.z) * (easeStrength + 0.03);
