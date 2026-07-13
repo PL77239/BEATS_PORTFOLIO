@@ -195,14 +195,32 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const durationMs = 2000;
-      const gravity = 3200;
+      const randomInRange = (min, max) => min + Math.random() * (max - min);
+      const randomInt = (min, max) => Math.floor(randomInRange(min, max + 1));
+      const pick = (arr) => arr[randomInt(0, arr.length - 1)];
+      const settleOrientations = [
+        { rx: 14, ry: -16, rz: 4 },
+        { rx: -12, ry: 24, rz: -10 },
+        { rx: 18, ry: 33, rz: 14 },
+        { rx: -20, ry: -28, rz: 8 },
+        { rx: 10, ry: 42, rz: -18 },
+        { rx: -16, ry: 8, rz: 22 },
+      ];
+      const dieFiveRest = pick(settleOrientations);
+      const dieSixRest = pick(settleOrientations);
+      const throwStyle = {
+        durationMs: randomInRange(1880, 2360),
+        gravity: randomInRange(3000, 3520),
+        centerPull: randomInRange(0.9, 1.25),
+        wobbleGain: randomInRange(0.85, 1.3),
+      };
+
+      const durationMs = throwStyle.durationMs;
       const drag = 0.994;
       const zDrag = 0.989;
-      const baseDistance = 50;
+      const baseDistance = randomInRange(44, 62);
       const restitutionProfile = [0.42, 0.32];
       const physicsStep = 1 / 120;
-      const randomInRange = (min, max) => min + Math.random() * (max - min);
       const spawnY = -window.innerHeight * randomInRange(0.42, 0.55);
       const smoothstep = (edge0, edge1, value) => {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -214,9 +232,9 @@ document.addEventListener("DOMContentLoaded", () => {
           die: dieFive,
           index: 0,
           offset: -baseDistance,
-          restRx: 16,
-          restRy: -20,
-          restRz: 6,
+          restRx: dieFiveRest.rx,
+          restRy: dieFiveRest.ry,
+          restRz: dieFiveRest.rz,
           x: randomInRange(260, 430),
           y: spawnY + randomInRange(-35, 25),
           z: randomInRange(180, 290),
@@ -245,9 +263,9 @@ document.addEventListener("DOMContentLoaded", () => {
           die: dieSix,
           index: 1,
           offset: baseDistance,
-          restRx: -14,
-          restRy: 22,
-          restRz: -8,
+          restRx: dieSixRest.rx,
+          restRy: dieSixRest.ry,
+          restRz: dieSixRest.rz,
           x: randomInRange(320, 520),
           y: spawnY + randomInRange(-45, 20),
           z: randomInRange(210, 320),
@@ -289,10 +307,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const stepState = (state, dt, elapsed) => {
         if (!state.settled) {
           const toCenter = state.offset - state.x;
-          const centerDriftStrength = state.bounces < 2 ? 240 : 420;
+          const centerDriftStrength = (state.bounces < 2 ? 240 : 420) * throwStyle.centerPull;
           state.vx += Math.max(-1, Math.min(1, toCenter / 280)) * centerDriftStrength * dt;
 
-          state.vy += gravity * dt;
+          state.vy += throwStyle.gravity * dt;
           state.vx *= drag;
           state.vz *= zDrag;
           state.x += state.vx * dt;
@@ -302,10 +320,10 @@ document.addEventListener("DOMContentLoaded", () => {
           state.ry += state.vry * dt;
           state.rz += state.vrz * dt;
 
-          const wobble = Math.sin(elapsed * 0.009 + state.spinPhase) * 18;
+          const wobble = Math.sin(elapsed * 0.009 + state.spinPhase) * 18 * throwStyle.wobbleGain;
           state.vrx += wobble * dt * state.spinBias;
-          state.vry += Math.cos(elapsed * 0.008 + state.spinPhase) * 14 * dt;
-          state.vrz += Math.sin(elapsed * 0.0065 + state.spinPhase * 0.8) * 12 * dt;
+          state.vry += Math.cos(elapsed * 0.008 + state.spinPhase) * 14 * throwStyle.wobbleGain * dt;
+          state.vrz += Math.sin(elapsed * 0.0065 + state.spinPhase * 0.8) * 12 * throwStyle.wobbleGain * dt;
 
           state.vrx *= 0.995;
           state.vry *= 0.995;

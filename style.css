@@ -120,6 +120,35 @@ body, html {
     opacity: 0;
 }
 
+.neon-sign .flicker-letter {
+    display: inline-block;
+    animation: neon-letter-flicker 4.8s infinite;
+}
+
+@keyframes neon-letter-flicker {
+    0%, 8%, 15%, 22%, 74%, 88%, 100% {
+        opacity: 1;
+        filter: brightness(1);
+        text-shadow:
+            0 0 5px #fff,
+            0 0 10px #fff,
+            0 0 20px var(--neon-color),
+            0 0 40px var(--neon-color);
+    }
+    9%, 13%, 20%, 76%, 90% {
+        opacity: 0.45;
+        filter: brightness(0.75);
+        text-shadow:
+            0 0 2px #fff,
+            0 0 6px color-mix(in srgb, var(--neon-color), #000 35%);
+    }
+    14%, 21%, 89% {
+        opacity: 0.1;
+        filter: brightness(0.45);
+        text-shadow: 0 0 1px #fff;
+    }
+}
+
 .beat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
