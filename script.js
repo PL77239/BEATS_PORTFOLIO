@@ -91,9 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       const loader = new window.THREE.GLTFLoader();
-      loader.load(
-        "dice/Classic%20Dice.gltf",
-        (gltf) => {
+      const onGltfLoaded = (gltf) => {
           const baseModel = gltf.scene || gltf.scenes?.[0];
           if (!baseModel) {
             webglDice.failed = true;
@@ -142,12 +140,17 @@ document.addEventListener("DOMContentLoaded", () => {
           resize();
           window.addEventListener("resize", resize);
           renderWebglDice();
-        },
-        undefined,
-        () => {
+      };
+      const onGltfError = () => {
+        if (!webglDice.ready) {
           webglDice.failed = true;
-        },
-      );
+        }
+      };
+
+      // Try both encoded and plain paths for hosts with strict URL handling.
+      loader.load("dice/Classic%20Dice.gltf", onGltfLoaded, undefined, () => {
+        loader.load("dice/Classic Dice.gltf", onGltfLoaded, undefined, onGltfError);
+      });
     } catch {
       webglDice.failed = true;
     }
