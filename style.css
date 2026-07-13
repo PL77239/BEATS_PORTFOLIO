@@ -361,6 +361,9 @@ body, html {
 
 .die {
     --die-size: 74px;
+    --dice-grade-sat: 0.92;
+    --dice-grade-contrast: 1.08;
+    --dice-grade-brightness: 1.03;
     --tx: 0px;
     --ty: 0px;
     --tz: 0px;
@@ -400,16 +403,17 @@ body, html {
     transform: rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
     transform-origin: 50% 50%;
     will-change: transform;
+    filter: saturate(var(--dice-grade-sat)) contrast(var(--dice-grade-contrast)) brightness(var(--dice-grade-brightness));
 }
 
 .die-face {
     position: absolute;
     width: var(--die-size);
     height: var(--die-size);
-    border-radius: 2px;
-    border: 1px solid #d3d3d3;
-    background: linear-gradient(145deg, #fdfdfd, #e7e7e7 72%, #d8d8d8);
-    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    border: 1px solid #d0d0d0;
+    background: linear-gradient(145deg, #fefefe, #e9e9e9 65%, #d6d6d6);
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.12), inset 0 0 20px rgba(255, 255, 255, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.35);
     backface-visibility: hidden;
     overflow: hidden;
 }
@@ -433,11 +437,11 @@ body, html {
 }
 
 .face-front  { transform: translateZ(calc(var(--die-size) / 2)); }
-.face-back   { transform: rotateY(180deg) translateZ(calc(var(--die-size) / 2)); }
-.face-right  { transform: rotateY(90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #ececec, #d3d3d3); }
-.face-left   { transform: rotateY(-90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #e5e5e5, #cecece); }
+.face-back   { transform: rotateY(180deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #efefef, #d8d8d8); }
+.face-right  { transform: rotateY(90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #e8e8e8, #cfcfcf); }
+.face-left   { transform: rotateY(-90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #e2e2e2, #cacaca); }
 .face-top    { transform: rotateX(90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #ffffff, #ebebeb); }
-.face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #d7d7d7, #c1c1c1); }
+.face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--die-size) / 2)); background: linear-gradient(145deg, #d2d2d2, #bcbcbc); }
 
 .pips {
     --pip: 9px;
@@ -445,7 +449,8 @@ body, html {
     width: var(--pip);
     height: var(--pip);
     border-radius: 50%;
-    background: #1f1f1f;
+    background: #1b1b1b;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18);
 }
 
 .pips-1 {

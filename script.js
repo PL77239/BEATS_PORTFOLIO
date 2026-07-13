@@ -52,10 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const durationMs = 2000;
       const gravity = 3200;
-      const drag = 0.992;
-      const zDrag = 0.987;
+      const drag = 0.994;
+      const zDrag = 0.989;
       const baseDistance = 50;
-      const bounceLift = [560, 300];
+      const restitutionProfile = [0.42, 0.32];
+      const physicsStep = 1 / 120;
       const randomInRange = (min, max) => min + Math.random() * (max - min);
       const smoothstep = (edge0, edge1, value) => {
         const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -85,6 +86,12 @@ document.addEventListener("DOMContentLoaded", () => {
           spinBias: randomInRange(0.92, 1.1),
           bounces: 0,
           settled: false,
+          renderX: 0,
+          renderY: 0,
+          renderZ: 0,
+          renderRx: 0,
+          renderRy: 0,
+          renderRz: 0,
         },
         {
           die: dieSix,
@@ -108,65 +115,89 @@ document.addEventListener("DOMContentLoaded", () => {
           spinBias: randomInRange(0.88, 1.08),
           bounces: 0,
           settled: false,
+          renderX: 0,
+          renderY: 0,
+          renderZ: 0,
+          renderRx: 0,
+          renderRy: 0,
+          renderRz: 0,
         },
       ];
 
       let lastTs = null;
+      let accumulator = 0;
       const startedAt = performance.now();
+      states.forEach((state) => {
+        state.renderX = state.x;
+        state.renderY = state.y;
+        state.renderZ = state.z;
+        state.renderRx = state.rx;
+        state.renderRy = state.ry;
+        state.renderRz = state.rz;
+      });
+
+      const stepState = (state, dt, elapsed) => {
+        if (!state.settled) {
+          state.vy += gravity * dt;
+          state.vx *= drag;
+          state.vz *= zDrag;
+          state.x += state.vx * dt;
+          state.y += state.vy * dt;
+          state.z += state.vz * dt;
+          state.rx += state.vrx * dt;
+          state.ry += state.vry * dt;
+          state.rz += state.vrz * dt;
+
+          const wobble = Math.sin(elapsed * 0.009 + state.spinPhase) * 18;
+          state.vrx += wobble * dt * state.spinBias;
+          state.vry += Math.cos(elapsed * 0.008 + state.spinPhase) * 14 * dt;
+          state.vrz += Math.sin(elapsed * 0.0065 + state.spinPhase * 0.8) * 12 * dt;
+
+          state.vrx *= 0.995;
+          state.vry *= 0.995;
+          state.vrz *= 0.995;
+        }
+
+        if (!state.settled && state.y > 0 && state.vy > 0) {
+          const impactVy = state.vy;
+          state.y = 0;
+          if (state.bounces < restitutionProfile.length) {
+            const restitution = restitutionProfile[state.bounces];
+            state.vy = -Math.max(165, impactVy * restitution * randomInRange(0.97, 1.03));
+            state.vx *= 0.64;
+            state.vz *= 0.57;
+            state.vrx *= 0.76;
+            state.vry *= 0.76;
+            state.vrz *= 0.78;
+            state.bounces += 1;
+          } else {
+            state.settled = true;
+            state.vx = 0;
+            state.vy = 0;
+            state.vz = 0;
+            state.vrx = 0;
+            state.vry = 0;
+            state.vrz = 0;
+          }
+        }
+      };
 
       const tick = (ts) => {
         if (lastTs === null) {
           lastTs = ts;
         }
-        const dt = Math.min((ts - lastTs) / 1000, 0.02);
+        const dt = Math.min((ts - lastTs) / 1000, 0.033);
         lastTs = ts;
         const elapsed = ts - startedAt;
         const progress = Math.min(elapsed / durationMs, 1);
+        accumulator += dt;
+
+        while (accumulator >= physicsStep) {
+          states.forEach((state) => stepState(state, physicsStep, elapsed));
+          accumulator -= physicsStep;
+        }
 
         states.forEach((state) => {
-          if (!state.settled) {
-            state.vy += gravity * dt;
-            state.vx *= drag;
-            state.vz *= zDrag;
-            state.x += state.vx * dt;
-            state.y += state.vy * dt;
-            state.z += state.vz * dt;
-            state.rx += state.vrx * dt;
-            state.ry += state.vry * dt;
-            state.rz += state.vrz * dt;
-
-            // Slight non-uniform rotational turbulence keeps throws organic.
-            const wobble = Math.sin(elapsed * 0.009 + state.spinPhase) * 18;
-            state.vrx += wobble * dt * state.spinBias;
-            state.vry += Math.cos(elapsed * 0.008 + state.spinPhase) * 14 * dt;
-            state.vrz += Math.sin(elapsed * 0.0065 + state.spinPhase * 0.8) * 12 * dt;
-
-            state.vrx *= 0.994;
-            state.vry *= 0.994;
-            state.vrz *= 0.994;
-          }
-
-          if (!state.settled && state.y > 0 && state.vy > 0) {
-            state.y = 0;
-            if (state.bounces < bounceLift.length) {
-              state.vy = -(bounceLift[state.bounces] * randomInRange(0.95, 1.04));
-              state.vx *= 0.58;
-              state.vz *= 0.52;
-              state.vrx *= 0.7;
-              state.vry *= 0.7;
-              state.vrz *= 0.72;
-              state.bounces += 1;
-            } else {
-              state.settled = true;
-              state.vx = 0;
-              state.vy = 0;
-              state.vz = 0;
-              state.vrx = 0;
-              state.vry = 0;
-              state.vrz = 0;
-            }
-          }
-
           // Keep both dice settling exactly in screen center region.
           if (state.settled || progress > 0.78) {
             const easeStrength = state.settled ? 0.24 : 0.1;
@@ -178,6 +209,15 @@ document.addEventListener("DOMContentLoaded", () => {
             state.rz += (state.restRz - state.rz) * (easeStrength + 0.04);
           }
 
+          // Render-level interpolation removes sharp micro-jitters between physics steps.
+          const renderLerp = 0.26;
+          state.renderX += (state.x - state.renderX) * renderLerp;
+          state.renderY += (state.y - state.renderY) * renderLerp;
+          state.renderZ += (state.z - state.renderZ) * renderLerp;
+          state.renderRx += (state.rx - state.renderRx) * renderLerp;
+          state.renderRy += (state.ry - state.renderRy) * renderLerp;
+          state.renderRz += (state.rz - state.renderRz) * renderLerp;
+
           const fadeIn = smoothstep(0, 0.07, progress);
           const fadeOut = 1 - smoothstep(0.9, 1, progress);
           let opacity = Math.max(0, Math.min(1, fadeIn * fadeOut));
@@ -188,12 +228,12 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           setDieState(state.die, {
-            x: state.x,
-            y: state.y,
-            z: state.z,
-            rx: state.rx,
-            ry: state.ry,
-            rz: state.rz,
+            x: state.renderX,
+            y: state.renderY,
+            z: state.renderZ,
+            rx: state.renderRx,
+            ry: state.renderRy,
+            rz: state.renderRz,
             scale,
             opacity,
           });
