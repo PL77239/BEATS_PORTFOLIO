@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.getElementById("beat-grid");
   const shuffleBtn = document.getElementById("shuffle-btn");
   const diceOverlay = document.getElementById("dice-overlay");
+  const diceCanvas = document.getElementById("dice-canvas");
   const dieFive = diceOverlay?.querySelector(".die-5") ?? null;
   const dieSix = diceOverlay?.querySelector(".die-6") ?? null;
   const globalAudioPlayer = new Audio();
@@ -13,6 +14,144 @@ document.addEventListener("DOMContentLoaded", () => {
   let revealTimerId = null;
   let finishTimerId = null;
   let shuffleAnimationId = null;
+  const webglDice = {
+    ready: false,
+    failed: false,
+    scene: null,
+    camera: null,
+    renderer: null,
+    diceGroups: [],
+  };
+
+  const renderWebglDice = () => {
+    if (!webglDice.ready || !webglDice.renderer || !webglDice.scene || !webglDice.camera) {
+      return;
+    }
+    webglDice.renderer.render(webglDice.scene, webglDice.camera);
+  };
+
+  const setWebglDieState = (dieIndex, state) => {
+    if (!webglDice.ready || !webglDice.diceGroups[dieIndex] || !window.THREE) {
+      return;
+    }
+    const group = webglDice.diceGroups[dieIndex];
+    group.position.set(state.x, -state.y, state.z);
+    group.rotation.set(
+      window.THREE.MathUtils.degToRad(state.rx),
+      window.THREE.MathUtils.degToRad(state.ry),
+      window.THREE.MathUtils.degToRad(state.rz),
+    );
+    group.scale.setScalar(state.scale);
+    if (Array.isArray(group.userData.materials)) {
+      group.userData.materials.forEach((material) => {
+        material.opacity = state.opacity;
+      });
+    }
+  };
+
+  const setupWebglDice = () => {
+    if (!diceOverlay || !diceCanvas || !window.THREE || !window.THREE.GLTFLoader) {
+      return;
+    }
+    try {
+      const renderer = new window.THREE.WebGLRenderer({
+        canvas: diceCanvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: "high-performance",
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setClearColor(0x000000, 0);
+
+      const scene = new window.THREE.Scene();
+      const camera = new window.THREE.OrthographicCamera(-1, 1, 1, -1, -2000, 2000);
+
+      const hemi = new window.THREE.HemisphereLight(0xffffff, 0x4d4d4d, 1.3);
+      hemi.position.set(0, 300, 400);
+      scene.add(hemi);
+
+      const keyLight = new window.THREE.DirectionalLight(0xffffff, 1.0);
+      keyLight.position.set(260, 340, 420);
+      scene.add(keyLight);
+
+      const fillLight = new window.THREE.DirectionalLight(0xffd9cc, 0.45);
+      fillLight.position.set(-240, 180, 120);
+      scene.add(fillLight);
+
+      const resize = () => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        renderer.setSize(width, height, false);
+        camera.left = -width / 2;
+        camera.right = width / 2;
+        camera.top = height / 2;
+        camera.bottom = -height / 2;
+        camera.updateProjectionMatrix();
+        renderWebglDice();
+      };
+
+      const loader = new window.THREE.GLTFLoader();
+      loader.load(
+        "dice/Classic%20Dice.gltf",
+        (gltf) => {
+          const baseModel = gltf.scene || gltf.scenes?.[0];
+          if (!baseModel) {
+            webglDice.failed = true;
+            return;
+          }
+
+          const box = new window.THREE.Box3().setFromObject(baseModel);
+          const size = box.getSize(new window.THREE.Vector3());
+          const center = box.getCenter(new window.THREE.Vector3());
+          const maxSize = Math.max(size.x, size.y, size.z) || 1;
+          const targetSize = 74;
+          const scale = targetSize / maxSize;
+
+          baseModel.scale.setScalar(scale);
+          baseModel.position.sub(center.multiplyScalar(scale));
+
+          const createDieGroup = () => {
+            const group = new window.THREE.Group();
+            const model = baseModel.clone(true);
+            const materials = [];
+            model.traverse((child) => {
+              if (child.isMesh && child.material) {
+                const mats = Array.isArray(child.material) ? child.material : [child.material];
+                const cloned = mats.map((material) => {
+                  const mat = material.clone();
+                  mat.transparent = true;
+                  mat.opacity = 0;
+                  return mat;
+                });
+                child.material = Array.isArray(child.material) ? cloned : cloned[0];
+                materials.push(...cloned);
+              }
+            });
+            group.userData.materials = materials;
+            group.add(model);
+            scene.add(group);
+            return group;
+          };
+
+          webglDice.scene = scene;
+          webglDice.camera = camera;
+          webglDice.renderer = renderer;
+          webglDice.diceGroups = [createDieGroup(), createDieGroup()];
+          webglDice.ready = true;
+          diceOverlay.classList.add("webgl-ready");
+          resize();
+          window.addEventListener("resize", resize);
+          renderWebglDice();
+        },
+        undefined,
+        () => {
+          webglDice.failed = true;
+        },
+      );
+    } catch {
+      webglDice.failed = true;
+    }
+  };
 
   const clearRunningTimers = () => {
     if (revealTimerId !== null) {
@@ -29,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const setDieState = (die, state) => {
+  const setDieState = (die, state, dieIndex = null) => {
     if (!die) {
       return;
     }
@@ -41,6 +180,9 @@ document.addEventListener("DOMContentLoaded", () => {
     die.style.setProperty("--rz", `${state.rz}deg`);
     die.style.setProperty("--scale", `${state.scale}`);
     die.style.setProperty("--die-opacity", `${state.opacity}`);
+
+    const resolvedDieIndex = dieIndex ?? (die === dieFive ? 0 : 1);
+    setWebglDieState(resolvedDieIndex, state);
   };
 
   const runDicePhysicsAnimation = () =>
@@ -66,6 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const states = [
         {
           die: dieFive,
+          index: 0,
           offset: -baseDistance,
           restRx: 16,
           restRy: -20,
@@ -95,6 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         {
           die: dieSix,
+          index: 1,
           offset: baseDistance,
           restRx: -14,
           restRy: 22,
@@ -236,8 +380,10 @@ document.addEventListener("DOMContentLoaded", () => {
             rz: state.renderRz,
             scale,
             opacity,
-          });
+          }, state.index);
         });
+
+        renderWebglDice();
 
         if (progress < 1) {
           shuffleAnimationId = requestAnimationFrame(tick);
@@ -407,8 +553,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 1200);
 
       if (prefersReducedMotion.matches) {
-        setDieState(dieFive, { x: -50, y: 0, z: 0, rx: 16, ry: -20, rz: 0, scale: 1, opacity: 0 });
-        setDieState(dieSix, { x: 50, y: 0, z: 0, rx: -14, ry: 22, rz: 0, scale: 1, opacity: 0 });
+        setDieState(dieFive, { x: -50, y: 0, z: 0, rx: 16, ry: -20, rz: 0, scale: 1, opacity: 0 }, 0);
+        setDieState(dieSix, { x: 50, y: 0, z: 0, rx: -14, ry: 22, rz: 0, scale: 1, opacity: 0 }, 1);
+        renderWebglDice();
         await new Promise((resolve) => setTimeout(resolve, 120));
       } else {
         await runDicePhysicsAnimation();
@@ -430,6 +577,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
     });
   }
+
+  setupWebglDice();
 
   const door = document.getElementById("garage-door");
   const introContainer = document.getElementById("intro-container");

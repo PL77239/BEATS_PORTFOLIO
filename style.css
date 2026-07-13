@@ -359,6 +359,23 @@ body, html {
     visibility: visible;
 }
 
+#dice-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+#dice-overlay.webgl-ready #dice-canvas {
+    opacity: 1;
+}
+
+#dice-overlay.webgl-ready .die {
+    opacity: 0 !important;
+}
+
 .die {
     --die-size: 74px;
     --dice-grade-sat: 0.92;
