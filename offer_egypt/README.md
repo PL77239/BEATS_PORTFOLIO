@@ -1,6 +1,6 @@
 # Poland-Importers.com — Commercial Proposal (redesign)
 
-A cleaned-up, professional rebuild of the trade-mission offer to the Egyptian
+A professionally laid-out rebuild of the trade-mission offer to the Egyptian
 Chemical & Fertilizers Export Council.
 
 ## Files
@@ -11,39 +11,39 @@ Chemical & Fertilizers Export Council.
 | `build_offer.py` | Reproducible generator (ReportLab) for the PDF. |
 | `assets/poland-importers-logo.png` | Company logo, extracted from the original and flattened onto white. |
 | `assets/poland-importers-logo-transparent.png` | Same logo with a transparent background. |
-| `original_offer_Egypt.pdf` | The original source document, kept for reference. |
+| `offer_Egypt_1_reference.pdf` | The client's reference ("offer Egypt 1.pdf") — the text source of truth. |
+| `original_offer_Egypt.pdf` | The earlier source document, kept for reference. |
 
-## What changed
+## Text-integrity policy
 
-The source file mixed final content with Polish notes left for the designer,
-e.g.:
+The wording, phrases, names, numbers and spellings are reproduced **verbatim**
+from `offer_Egypt_1_reference.pdf`. Nothing is paraphrased, "corrected" or
+added. Intentional-looking source quirks are therefore preserved on purpose,
+for example:
 
-* `TU DAJ TAKI LAYOUT JAK PALLADIUM STR 1 ... JAKO 1 SZA STRONA` — "give it a
-  cover-page layout (like Palladium), as page 1";
-* `TU BĘDZIE OD DRUGIE STRONY TYTUL` / `... W TAKICH LINIJKACH JAK 1 SZA STRONA`
-  — "the section title starts from page 2 ... in bars like page 1";
-* `TU DAJ KROPKA ALBO INNY PUNKTOR` — "put a dot / another bullet here";
-* `tu może znajdź lepsze słowo` — "find a better word here" (next to
-  *multiindustrial*).
+* `Mariott`, `multiindustrial`, `hecavalent`, `Utilize`, `analysing`;
+* lowercase `polish`; `IVA` (not VAT);
+* European number style `24.000 Euro`, `1500 Euro/day`, `100ppm`;
+* spelled-out sizes `two hundred m2` / `three hundred m2`;
+* ranges written with a hyphen (`10-20`, `130-150`).
 
-Those are instructions, not content, so they were removed and their intent
-applied:
+Only **layout** was applied (cover page, coloured section bars, bullets,
+tables), per the Polish designer notes in the earlier draft.
 
-1. **Cover page** — a proper title page that keeps the logo, with the company
-   details, the addressee, the subject, and the country of performance.
-2. **Section bars (I–V)** — each main section opens with a coloured title bar in
-   the logo's blue/orange palette.
-3. **Bulleted sub-headings** — every sub-section (Organization Stages,
-   Methodology, Timeline, Scope of Work, Deliverables, Costs, etc.) is marked
-   with a coloured bullet.
-4. **Clean typesetting** — consistent numbered/bulleted lists, proper cost
-   tables, and a repeating-header import-requirements matrix.
-5. **Copy clean-up** — removed the manual `-- x of 10 --` page markers and the
-   highlighted note, de-duplicated the "Deliverables" list, fixed spacing,
-   punctuation and typos (e.g. *Minsitry* → *Ministry*, *Mariott* → *Marriott*),
-   and changed *multiindustrial* → *multi-industry*.
+### Two source artifacts (please confirm)
 
-Content and figures were preserved; only wording and layout were improved.
+1. **Duplicated / truncated "Deliverables".** The source contains the heading
+   *Deliverables* twice: once followed by a cut-off bullet ("…before each
+   miss") and once by the complete list. The redesign shows it **once**, using
+   the complete list. Say the word and I can reproduce the duplicate/fragment
+   verbatim instead.
+2. **Editing noise omitted.** The manual `-- x of 10 --` page markers, a couple
+   of lone `.` lines and a stray empty bullet were dropped (they are
+   pagination/editing noise, not content). Page numbers are shown in the footer
+   instead.
+
+Everything else — every sentence, name, figure and requirement — is identical
+to the reference.
 
 ## Rebuild
 
