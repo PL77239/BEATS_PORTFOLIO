@@ -33,7 +33,7 @@ import os
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -61,8 +61,6 @@ from reportlab.platypus import (
     TableStyle,
     Image,
     KeepTogether,
-    ListFlowable,
-    ListItem,
     NextPageTemplate,
     PageBreak,
 )
@@ -84,19 +82,18 @@ LINE = colors.HexColor("#C9D3DF")
 PAGE_W, PAGE_H = A4
 MARGIN = 20 * mm
 
-# Orange filled square bullet using the built-in ZapfDingbats font ('n').
-SQ = '<font name="ZapfDingbats" color="#E0801E" size=8>n</font>'
-
-
-def bullet(txt):
-    return f"{SQ}&nbsp;&nbsp;{txt}"
+# Bullet markers are drawn from the *embedded* Unicode font (not ZapfDingbats),
+# so they survive re-import into editors such as Canva and stay glued to the
+# text baseline. U+25AA = small filled square, U+25E6 = white bullet (sub-level).
+MARK = "\u25aa"
+SUBMARK = "\u25e6"
 
 
 # ----------------------------------------------------------------- styles ----
 styles = {}
 styles["body"] = ParagraphStyle(
     "body", fontName="Helvetica", fontSize=10, leading=15,
-    textColor=INK, alignment=TA_JUSTIFY, spaceAfter=6,
+    textColor=INK, alignment=TA_LEFT, spaceAfter=6,
 )
 styles["sub"] = ParagraphStyle(
     "sub", fontName="Helvetica-Bold", fontSize=12, leading=16,
@@ -157,25 +154,51 @@ def section_bar(num, title):
     return KeepTogether([Spacer(1, 6), inner, Spacer(1, 8)])
 
 
+def _li_style(name, parent, indent, bsize, color, bfont, bindent=2):
+    """A hanging-indent list style with the marker on the text baseline.
+
+    The marker is part of the paragraph (drawn via ``bulletText``) using an
+    embedded font and a size close to the text, so it lines up evenly with the
+    text and does not drift when the PDF is re-opened in another editor.
+    """
+    return ParagraphStyle(
+        name, parent=parent, alignment=TA_LEFT,
+        leftIndent=indent, bulletIndent=bindent,
+        bulletFontName=bfont, bulletFontSize=bsize, bulletColor=color,
+        spaceBefore=0, spaceAfter=4,
+    )
+
+
 def sub_head(txt):
-    """Coloured-bullet sub-section heading."""
-    return Paragraph(bullet(txt), styles["sub"])
-
-
-def ordered(items, style, fmt="%s)", start=1):
-    return ListFlowable(
-        [ListItem(Paragraph(t, style), value=start + i) for i, t in enumerate(items)],
-        bulletType="1", bulletFormat=fmt, bulletColor=BLUE_DARK,
-        bulletFontName="Helvetica-Bold", leftIndent=18, spaceBefore=0,
+    """Coloured-square sub-section heading (evenly aligned hanging marker)."""
+    st = ParagraphStyle(
+        "subh", parent=styles["sub"], alignment=TA_LEFT,
+        leftIndent=16, bulletIndent=0,
+        bulletFontName=UNI, bulletFontSize=styles["sub"].fontSize - 3,
+        bulletColor=ORANGE,
     )
+    return Paragraph(txt, st, bulletText=MARK)
 
 
-def unordered(items, style, char="square", size=6):
-    return ListFlowable(
-        [ListItem(Paragraph(t, style)) for t in items],
-        bulletType="bullet", start=char, bulletColor=ORANGE,
-        leftIndent=16, bulletFontSize=size, spaceBefore=0,
-    )
+def ordered(items, style=None, fmt="{})", start=1):
+    """Return a list of numbered paragraphs (append with ``S.extend``)."""
+    style = style or styles["li"]
+    st = _li_style("li_num", style, 20, style.fontSize, BLUE_DARK,
+                   "Helvetica-Bold", bindent=0)
+    return [Paragraph(t, st, bulletText=fmt.format(start + i))
+            for i, t in enumerate(items)]
+
+
+def unordered(items, style=None, sub=False):
+    """Return a list of bulleted paragraphs (append with ``S.extend``)."""
+    if sub:
+        st = _li_style("li_o", styles["li_sub"], 32, 8, GREY, UNI, bindent=18)
+        marker = SUBMARK
+    else:
+        style = style or styles["li"]
+        st = _li_style("li_sq", style, 16, style.fontSize - 2, ORANGE, UNI)
+        marker = MARK
+    return [Paragraph(t, st, bulletText=marker) for t in items]
 
 
 # ------------------------------------------------------------- page frame ----
@@ -298,7 +321,7 @@ def build():
         "I", "The mechanism and requirements for organizing a trade mission."))
 
     S.append(sub_head("Organization Stages"))
-    S.append(ordered([
+    S.extend(ordered([
         "Selection of the group of products for the trade mission",
         "Selection of city and time range",
         "Decide duration of the trade mission.",
@@ -313,24 +336,24 @@ def build():
         "<b>Follow-up and evaluation</b> Meeting summaries, sending materials, invitations for second "
         "meetings (including adding additional decision-makers), tracking metrics (number of leads, "
         "qualified contacts, pipeline, deals, qualitative feedback)",
-    ], styles["li"], fmt="%s)"))
+    ], fmt="{})"))
 
     S.append(sub_head("Methodology for Identifying and Arranging B2B Meetings"))
     S.append(Paragraph("1. Define Objectives and Participant Profiles", styles["mini"]))
-    S.append(unordered([
+    S.extend(unordered([
         "Establish the trade mission's objectives, target sectors, and priority products or services.",
         "Collect detailed profiles of participating companies, including their offerings, production "
         "capacity, import preferences.",
         "Determine each participant's ideal business partner profile (e.g., importer, distributor, "
         "wholesaler, agent, direct buyer).",
-    ], styles["li"]))
+    ]))
     S.append(Paragraph("2. Market Research and Partner Identification", styles["mini"]))
-    S.append(unordered([
+    S.extend(unordered([
         "Conduct comprehensive market research to identify potential buyers and distribution partners "
         "that match the participants' objectives.",
         "Utilize multiple sources, including:",
-    ], styles["li"]))
-    S.append(unordered([
+    ]))
+    S.extend(unordered([
         "Industry databases and business directories",
         "Chambers of commerce and trade associations",
         "Government trade and investment agencies",
@@ -338,7 +361,7 @@ def build():
         "Existing business networks and referrals",
         "Professional networking platforms and commercial intelligence tools",
         "Own records",
-    ], styles["li_sub"], char="circle"))
+    ], sub=True))
 
     # ===================================================== SECTION II ======
     S.append(section_bar(
@@ -348,18 +371,18 @@ def build():
     S.append(Paragraph(
         "After deciding the trade mission will take place the following deadlines and core dates "
         "shall be agreed.", styles["body"]))
-    S.append(ordered([
+    S.extend(ordered([
         "Deadline to agree date's range for the trade event (assumption is for 2 days event)",
         "Deadline for collect offers of available and suggested places for arrange the trade event.",
         "Deadline for deciding the final dates and place.",
         "The period of 3 months is needed to arrange the event in the best professional way.",
         "The progress of work of the Consultant shall be reported as follows:",
-    ], styles["li"], fmt="%s."))
-    S.append(unordered([
+    ], fmt="{}."))
+    S.extend(unordered([
         "till 4 weeks before the event, once a week",
         "till 1 week before the event, twice a week",
         "last week before the event, every day",
-    ], styles["li_sub"], char="circle"))
+    ], sub=True))
 
     S.append(sub_head("Scope of Work and Standards"))
     S.append(Paragraph(
@@ -417,11 +440,11 @@ def build():
          "After the trade mission, the consultancy firm should collect and document feedback from the "
          "buyers who attended the trade event as much as possible."),
     ]
-    S.append(unordered(
-        [f"<b>{h}:</b> {b}" for h, b in scope], styles["li"]))
+    S.extend(unordered(
+        [f"<b>{h}:</b> {b}" for h, b in scope]))
 
     S.append(sub_head("Deliverables"))
-    S.append(unordered([
+    S.extend(unordered([
         "An initial list of invited participants and their specialization should be submitted three to "
         "four weeks before the trade mission.",
         "In collaboration with the Ministry a verified list of eligible Egyptian companies to participate "
@@ -437,7 +460,7 @@ def build():
         "A follow-up matrix with buyers who attended the trade event should include their feedback, the "
         "probability of doing business with Egyptian companies, and any positive or negative aspects of "
         "dealing with Egyptian exporters in general for the Ministry learning purposes.",
-    ], styles["li"]))
+    ]))
 
     # ===================================================== SECTION III =====
     S.append(section_bar("III", "Estimated costs and commercial terms."))
@@ -508,13 +531,13 @@ def build():
         "Average price for single room 130-150 Euro/day, double room-140-160 Euro/day", styles["body"]))
 
     S.append(sub_head("Commercial terms"))
-    S.append(unordered([
+    S.extend(unordered([
         "Showroom and catering are paid by the Council directly; terms of payment usually are. 50% "
         "advance and 50% after the event",
         "Exhibitors pay hotel rooms individually, and we always ask for special rates for participants",
         "Terms of payment for arranging the trade mission: 30% when sign the contract, 30 % before the "
         "event, 40% after the event. These terms are negotiable.",
-    ], styles["li"]))
+    ]))
 
     # ===================================================== SECTION IV ======
     S.append(section_bar("IV", "References-selected"))
@@ -528,8 +551,8 @@ def build():
         ("Italian Association of Cosmetic Producers",
          "arranging trade mission of Italian delegates to Poland."),
     ]
-    S.append(unordered(
-        [f"<b>{h}:</b> {b}" for h, b in refs], styles["li"]))
+    S.extend(unordered(
+        [f"<b>{h}:</b> {b}" for h, b in refs]))
 
     # ===================================================== SECTION V =======
     S.append(section_bar("V", "Market requirements for selected products"))

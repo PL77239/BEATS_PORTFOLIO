@@ -30,6 +30,15 @@ for example:
 Only **layout** was applied (cover page, coloured section bars, bullets,
 tables), per the Polish designer notes in the earlier draft.
 
+### Editor compatibility (Canva etc.)
+
+Bullet markers are drawn from the *embedded* Unicode font (`U+25AA` square,
+`U+25E6` sub-bullet) rather than the ZapfDingbats symbol font, use a single
+consistent hanging-indent with the marker on the text baseline, and body text
+is left-aligned. This keeps the "dots" evenly positioned next to the text and
+makes them survive re-import into editors such as Canva (symbol fonts are a
+common cause of misaligned/replaced bullets there).
+
 ### Two source artifacts (please confirm)
 
 1. **Duplicated / truncated "Deliverables".** The source contains the heading
