@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const dieFive = diceOverlay?.querySelector(".die-5") ?? null;
   const dieSix = diceOverlay?.querySelector(".die-6") ?? null;
   const globalAudioPlayer = new Audio();
+  globalAudioPlayer.crossOrigin = "anonymous";
+  window.beatsAudioPlayer = globalAudioPlayer;
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   let currentlyPlayingBtn = null;
@@ -520,6 +522,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="player-controls">
                   <button class="play-pause-btn" data-audio-src="${filename}">▶</button>
                   <input type="range" class="progress-bar" value="0" max="100">
+                  <button class="visualize-btn" data-audio-src="${filename}" data-title="${title}" title="Create music video">🎬</button>
                 </div>
                 <button class="inquire-btn" onclick="sendInquiry('${beatId}', '${title}')">Inquire</button>
               </div>
@@ -531,12 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch((error) => console.error("Błąd ładowania listy bitów:", error));
 
-    grid.addEventListener("click", (e) => {
-      if (!e.target.classList.contains("play-pause-btn")) {
-        return;
-      }
-
-      const btn = e.target;
+    const startPlaybackFromButton = (btn) => {
       const cardInner = btn.closest(".beat-card-back");
       const card = btn.closest(".beat-card");
       const progressBar = cardInner?.querySelector(".progress-bar");
@@ -549,8 +547,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentlyPlayingBtn === btn) {
         if (globalAudioPlayer.paused) {
           globalAudioPlayer.play().catch((err) => console.warn(err));
-        } else {
-          globalAudioPlayer.pause();
         }
         return;
       }
@@ -570,6 +566,29 @@ document.addEventListener("DOMContentLoaded", () => {
       currentProgressBar = progressBar;
       globalAudioPlayer.src = encodeURI(audioSrc);
       globalAudioPlayer.play().catch((err) => console.warn(err));
+    };
+
+    grid.addEventListener("click", (e) => {
+      const playBtn = e.target.closest(".play-pause-btn");
+      if (playBtn) {
+        if (currentlyPlayingBtn === playBtn && !globalAudioPlayer.paused) {
+          globalAudioPlayer.pause();
+          return;
+        }
+        startPlaybackFromButton(playBtn);
+        return;
+      }
+
+      const visualizeBtn = e.target.closest(".visualize-btn");
+      if (visualizeBtn) {
+        const card = visualizeBtn.closest(".beat-card");
+        const playPauseBtn = card?.querySelector(".play-pause-btn");
+        const title = visualizeBtn.getAttribute("data-title") || "Untitled Beat";
+        if (playPauseBtn && (currentlyPlayingBtn !== playPauseBtn || globalAudioPlayer.paused)) {
+          startPlaybackFromButton(playPauseBtn);
+        }
+        document.dispatchEvent(new CustomEvent("beats:visualize", { detail: { title } }));
+      }
     });
 
     grid.addEventListener("input", (e) => {
