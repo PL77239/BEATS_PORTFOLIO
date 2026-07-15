@@ -640,3 +640,237 @@ body, html {
         0 30px 0 #1f1f1f,
         30px 30px 0 #1f1f1f;
 }
+
+/* --- "Create music video" trigger button on each beat card --- */
+.visualize-btn {
+    background: transparent;
+    border: 1px solid var(--neon-color);
+    color: var(--neon-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visualize-btn:hover,
+.visualize-btn:focus-visible {
+    background: var(--neon-color);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.6);
+    outline: none;
+}
+
+/* --- Windows XP "Luna" style Media Player visualizer overlay --- */
+#visualizer-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.72);
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+#visualizer-overlay.open {
+    display: flex;
+}
+
+.wmp-window {
+    width: min(960px, 100%);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    background: #ece9d8;
+    border: 1px solid #0a246a;
+    border-radius: 8px 8px 4px 4px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+    overflow: hidden;
+    font-family: Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.wmp-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 6px 6px 8px;
+    background: linear-gradient(180deg, #2f71e2 0%, #1d5cd6 6%, #1948c4 40%, #143d9e 60%, #1c58cf 88%, #3a8ef2 100%);
+    border-bottom: 1px solid #0a246a;
+    color: #fff;
+}
+
+.wmp-title-icon {
+    font-size: 1rem;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.wmp-title-text {
+    flex: 1;
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.wmp-title-buttons {
+    display: flex;
+    gap: 3px;
+}
+
+.wmp-title-btn {
+    width: 21px;
+    height: 19px;
+    font-size: 0.65rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #143d9e;
+    background: linear-gradient(180deg, #fefefe, #d7e4f7 55%, #b9cdf0);
+    border: 1px solid #0a246a;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.wmp-close {
+    background: linear-gradient(180deg, #ff9d8c, #e8564a 55%, #c1291f);
+    color: #fff;
+    cursor: pointer;
+}
+
+.wmp-min,
+.wmp-max {
+    cursor: default;
+    opacity: 0.85;
+}
+
+.wmp-body {
+    position: relative;
+    background: #000;
+    padding: 6px;
+}
+
+#visualizer-canvas {
+    display: block;
+    width: 100%;
+    height: min(56vh, 520px);
+    background: #000;
+    border: 2px solid #0a246a;
+    border-radius: 2px;
+}
+
+.wmp-now-playing {
+    position: absolute;
+    left: 16px;
+    bottom: 14px;
+    color: #d8ecff;
+    font-size: 0.78rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    letter-spacing: 0.02em;
+}
+
+.wmp-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #f3f2eb, #e2ded0);
+    border-top: 1px solid #fff;
+    border-bottom: 1px solid #aca998;
+}
+
+.wmp-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #142a54;
+}
+
+.wmp-field select {
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 3px 4px;
+    border: 1px solid #7b96b8;
+    border-radius: 3px;
+    background: #fff;
+    color: #142a54;
+}
+
+.wmp-record-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #7a0d0d;
+    background: linear-gradient(180deg, #ffffff, #f4d9d9 55%, #e6b8b8);
+    border: 1px solid #a34747;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+}
+
+.wmp-record-btn:hover {
+    filter: brightness(0.97);
+}
+
+.wmp-record-btn.recording {
+    color: #fff;
+    background: linear-gradient(180deg, #ff6b6b, #d62828 55%, #a91d1d);
+    animation: pulse-red 1.5s infinite;
+}
+
+.wmp-rec-time {
+    font-family: "Consolas", monospace;
+    font-size: 0.85rem;
+    color: #7a0d0d;
+    min-width: 3.5em;
+}
+
+.wmp-download-btn {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0a5c1f;
+    background: linear-gradient(180deg, #ffffff, #d7f4dc 55%, #b6e6c0);
+    border: 1px solid #4a8a55;
+    border-radius: 4px;
+    padding: 6px 12px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.wmp-download-btn[hidden] {
+    display: none;
+}
+
+.wmp-statusbar {
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    color: #444;
+    background: #ece9d8;
+    border-top: 1px solid #fff;
+}
+
+@media (max-width: 640px) {
+    .wmp-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .wmp-field,
+    .wmp-record-btn,
+    .wmp-download-btn {
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
